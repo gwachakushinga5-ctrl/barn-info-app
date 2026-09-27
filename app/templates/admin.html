@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Admin dashboard · BarnCure{% endblock %}
+{% block content %}
+<div class="flex items-center justify-between mb-3">
+  <h1 class="text-2xl font-bold">Admin — totals & detections</h1>
+  <button onclick="location.reload()" class="text-sm bg-stone-900 text-amber-50 rounded px-3 py-1">Refresh</button>
+</div>
+<div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+  <div class="bg-white rounded-xl shadow p-3"><div class="text-xs text-stone-500">BARNS</div><div class="text-3xl font-bold">{{ totals.barns }}</div></div>
+  <div class="bg-white rounded-xl shadow p-3"><div class="text-xs text-stone-500">FARMERS</div><div class="text-3xl font-bold">{{ totals.farmers }}</div></div>
+  <div class="bg-white rounded-xl shadow p-3"><div class="text-xs text-stone-500">READINGS TODAY</div><div class="text-3xl font-bold">{{ totals.today }}</div><div class="text-xs">total {{ totals.readings }}{% if totals.avg_temp %} · avg {{ totals.avg_temp }}°C{% endif %}</div></div>
+  <div class="bg-white rounded-xl shadow p-3"><div class="text-xs text-stone-500">RISK NOW</div>
+    <div class="text-sm font-bold text-green-700">OK {{ totals.ok }}</div>
+    <div class="text-sm font-bold text-amber-600">WATCH {{ totals.watch }}</div>
+    <div class="text-sm font-bold text-red-600">DANGER {{ totals.danger }}</div></div>
+</div>
+<div class="bg-white rounded-xl shadow p-4 mb-4">
+  <h2 class="font-bold mb-2">Temperature trend (last {{ chart|length }} readings)</h2>
+  <canvas id="trend" height="120"></canvas>
+</div>
+<h2 class="font-bold mb-2">Priority list — riskiest barns first</h2>
+<div class="space-y-2">
+{% for b, r, fname in rows %}
+  <div class="bg-white rounded-xl shadow p-3 border-l-8 {% if not r %}border-stone-300{% elif r.status=='DANGER' %}border-red-600{% elif r.status=='WATCH' %}border-amber-500{% else %}border-green-600{% endif %}">
+    <div class="flex justify-between items-center">
+      <div class="font-bold">{{ b.barn_code }} <span class="font-normal text-sm text-stone-500">{{ b.location_text }} · {{ fname }}</span></div>
+      <div class="text-sm font-bold {% if r and r.status=='DANGER' %}text-red-600{% elif r and r.status=='WATCH' %}text-amber-600{% else %}text-green-700{% endif %}">{{ r.status if r else 'NO DATA' }}{% if r %} · {{ r.risk_score }}{% endif %}</div>
+    </div>
+    {% if r %}
+    <div class="text-sm mt-1">{{ labels[r.stage] }} · {{ r.temp_c }}°C{% if r.humidity_pct %} · {{ r.humidity_pct }}% RH{% endif %}{% if r.load_kg %} · load {{ r.load_kg }}kg / {{ b.capacity_kg }}kg{% endif %} · <span class="text-stone-500">{{ r.taken_at.strftime('%m-%d %H:%M') }}</span></div>
+    <div class="text-xs mt-1 text-stone-700">{{ r.reasons }}</div>
+    {% else %}
+    <div class="text-xs text-stone-500">No readings yet.</div>
+    {% endif %}
+  </div>
+{% endfor %}
+</div>
+<details class="mt-4 bg-white rounded-xl shadow p-4 text-sm">
+  <summary class="font-bold cursor-pointer">Decision helper — what to do</summary>
+  <ul class="list-disc ml-5 mt-2 space-y-1">
+    <li><b class="text-red-600">DANGER burn</b>: cut heat / open vents now, re-check in 1h, spread load if overloaded.</li>
+    <li><b class="text-amber-600">WATCH high</b>: ease heat 2–3°C, verify thermometer placement (not above flue).</li>
+    <li><b>Stalled / low temp</b>: add fuel, close leaks, check for wet leaf / high humidity; mold risk if yellowing stays cool + damp.</li>
+  </ul>
+</details>
+{% endblock %}
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+const pts = {{ chart | tojson }};
+new Chart(document.getElementById('trend'), {type:'line',
+ data:{labels: pts.map(p=>p.t+' '+p.barn),
+ datasets:[{label:'Temp °C', data: pts.map(p=>p.temp),
+  borderColor:'#92400e', backgroundColor:'rgba(146,64,14,.15)', fill:true, tension:.3,
+  pointBackgroundColor: pts.map(p=>p.status==='DANGER'?'#dc2626':p.status==='WATCH'?'#d97706':'#16a34a')}]},
+ options:{plugins:{legend:{display:false}}, scales:{y:{title:{display:true,text:'°C'}}}}});
+</script>
+{% endblock %}

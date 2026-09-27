@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}Tobacco Barn Monitor{% endblock %}</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/htmx.org@1.9.10"></script>
+<link rel="stylesheet" href="/static/app.css">
+</head>
+<body class="bg-amber-50 text-stone-800">
+<header class="bg-stone-900 text-amber-50 px-4 py-3 flex items-center justify-between sticky top-0 z-10">
+  <a href="/" class="font-bold text-lg">🌿 BarnCure <span class="font-normal text-amber-300 text-sm">tobacco MVP</span></a>
+  <nav class="text-sm space-x-3">
+    <a href="/" class="hover:underline">Farmer form</a>
+    <a href="/admin?token=admin123" class="hover:underline">Admin</a>
+    <a href="/docs" class="hover:underline">API</a>
+  </nav>
+</header>
+<main class="max-w-3xl mx-auto p-4">{% block content %}{% endblock %}</main>
+<footer class="text-center text-xs text-stone-500 py-6">BarnCure MVP · FastAPI + SQLite · curing presets per stage</footer>
+{% block scripts %}{% endblock %}
+</body>
+</html>

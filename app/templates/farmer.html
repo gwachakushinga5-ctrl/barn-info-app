@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Submit barn reading · BarnCure{% endblock %}
+{% block content %}
+{% if ok %}
+<div class="rounded-lg p-4 mb-4 text-white font-semibold {% if status == 'DANGER' %}bg-red-600{% elif status == 'WATCH' %}bg-amber-500 text-stone-900{% else %}bg-green-600{% endif %}">
+  Saved for barn {{ barn }} — status: {{ status }}. {% if status != 'OK' %}Please check the barn now.{% endif %}
+</div>
+{% endif %}
+<h1 class="text-2xl font-bold mb-1">Barn reading — from the field</h1>
+<p class="text-sm text-stone-600 mb-4">Basic fields only. Works on any phone browser. Barn is auto-created on first submit.</p>
+<form action="/submit" method="post" class="bg-white rounded-xl shadow p-4 space-y-3">
+  <div class="grid grid-cols-2 gap-3">
+    <label class="block">Barn code*<input name="barn_code" required placeholder="TB-001" class="mt-1 w-full border rounded p-2"></label>
+    <label class="block">Farmer name*<input name="farmer_name" required placeholder="T. Moyo" class="mt-1 w-full border rounded p-2"></label>
+  </div>
+  <div class="grid grid-cols-2 gap-3">
+    <label class="block">Phone<input name="phone" placeholder="07..." class="mt-1 w-full border rounded p-2"></label>
+    <label class="block">Location / site*<input name="location_text" required placeholder="e.g. Marondera Block C" class="mt-1 w-full border rounded p-2"></label>
+  </div>
+  <div class="grid grid-cols-2 gap-3">
+    <label class="block">Curing stage*
+      <select name="stage" class="mt-1 w-full border rounded p-2">
+        {% for s in stages %}<option value="{{ s }}">{{ labels[s] }}</option>{% endfor %}
+      </select>
+    </label>
+    <label class="block">Temperature °C*<input name="temp_c" type="number" step="0.1" required placeholder="36.5" class="mt-1 w-full border rounded p-2"></label>
+  </div>
+  <div class="grid grid-cols-3 gap-3">
+    <label class="block">Humidity %<input name="humidity_pct" type="number" step="0.1" placeholder="85" class="mt-1 w-full border rounded p-2"></label>
+    <label class="block">Load kg<input name="load_kg" type="number" step="1" placeholder="420" class="mt-1 w-full border rounded p-2"></label>
+    <label class="block">Capacity kg<input name="capacity_kg" type="number" step="1" value="500" class="mt-1 w-full border rounded p-2"></label>
+  </div>
+  <div class="grid grid-cols-2 gap-3">
+    <label class="block">Heat source<input name="heat_source" placeholder="coal / wood / electric" class="mt-1 w-full border rounded p-2"></label>
+    <label class="block">Notes<input name="notes" placeholder="anything unusual..." class="mt-1 w-full border rounded p-2"></label>
+  </div>
+  <button class="w-full bg-stone-900 text-amber-50 font-bold rounded-lg py-3 text-lg">Submit reading</button>
+  <p class="text-xs text-stone-500">Admin sees totals + burn/under-cure flags instantly at <a class="underline" href="/admin?token=admin123">/admin</a>.</p>
+</form>
+<details class="mt-4 bg-white rounded-xl shadow p-4 text-sm">
+  <summary class="font-bold cursor-pointer">Acceptable standards (presets)</summary>
+  <ul class="mt-2 space-y-1">
+  {% for s in stages %}
+    <li><b>{{ labels[s] }}</b>: {{ presets[s].temp_ok[0] }}–{{ presets[s].temp_ok[1] }}°C ideal ·
+      danger ≥{{ presets[s].danger_high }}°C (burn) / ≤{{ presets[s].danger_low }}°C (stalled) ·
+      humidity {{ presets[s].hum_ok[0] }}–{{ presets[s].hum_ok[1] }}%</li>
+  {% endfor %}
+  </ul>
+</details>
+{% endblock %}
